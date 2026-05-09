@@ -25,42 +25,52 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const fallback = {
+const fallback: Record<string, any> = {
   hero: { title: "SMA Taruna Sumbar", subtitle: "Membentuk Generasi Pemimpin Berkarakter, Disiplin, dan Berprestasi", cta: "Daftar Sekarang" },
   about: { title: "Tentang Sekolah", body: "SMA Taruna Sumbar adalah sekolah menengah atas berbasis semi-militer." },
   vision: { vision: "Menjadi sekolah unggulan...", mission: ["Pendidikan bermutu"] },
   stats: { students: 850, teachers: 62, achievements: 120, alumni: 3500 },
   contact: { address: "", phone: "", email: "", whatsapp: "6281234567890", facebook: "https://facebook.com", maps: "" },
+  branding: { logo_url: "", hero_image_url: "" },
+  register: { title: "", subtitle: "", steps: [] },
 };
 
 function Index() {
   const [content, setContent] = useState<Record<string, any>>(fallback);
 
+  const load = () => {
+    supabase.from("site_content").select("key,value").then(({ data }) => {
+      if (data) {
+        const map: Record<string, any> = { ...fallback };
+        data.forEach((r) => (map[r.key] = { ...(fallback[r.key] || {}), ...(r.value as any) }));
+        setContent(map);
+      }
+    });
+  };
+
   useEffect(() => {
-    supabase
-      .from("site_content")
-      .select("key,value")
-      .then(({ data }) => {
-        if (data) {
-          const map: Record<string, any> = { ...fallback };
-          data.forEach((r) => (map[r.key] = r.value));
-          setContent(map);
-        }
-      });
+    load();
+    const channel = supabase
+      .channel("site_content_realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "site_content" }, () => load())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
     <div className="min-h-screen">
-      <Navbar />
-      <Hero data={content.hero} />
+      <Navbar logo={content.branding?.logo_url} />
+      <Hero data={content.hero} image={content.branding?.hero_image_url} />
       <About data={content.about} />
       <Stats data={content.stats} />
       <Vision data={content.vision} />
       <News />
       <Gallery />
-      <Register whatsapp={content.contact.whatsapp} />
+      <Register whatsapp={content.contact.whatsapp} data={content.register} />
       <Contact data={content.contact} />
-      <Footer />
+      <Footer logo={content.branding?.logo_url} contact={content.contact} />
       <FloatingButtons whatsapp={content.contact.whatsapp} facebook={content.contact.facebook} />
     </div>
   );

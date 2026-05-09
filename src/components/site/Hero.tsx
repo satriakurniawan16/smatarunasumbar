@@ -3,12 +3,30 @@ import { ChevronRight, Award } from "lucide-react";
 
 type Hero = { title: string; subtitle: string; cta: string };
 
-export function Hero({ data }: { data: Hero }) {
+export function Hero({ data, image }: { data: Hero; image?: string }) {
   return (
-    <section id="hero" className="relative min-h-screen bg-hero flex items-center overflow-hidden">
-      <div className="absolute inset-0 opacity-10" style={{
-        backgroundImage: "radial-gradient(circle at 20% 30%, oklch(0.78 0.14 85 / 0.6), transparent 40%), radial-gradient(circle at 80% 70%, oklch(0.78 0.14 85 / 0.4), transparent 40%)"
-      }} />
+    <section
+      id="hero"
+      className="relative min-h-screen bg-hero flex items-center overflow-hidden"
+    >
+      {image ? (
+        <>
+          <img
+            src={image}
+            alt="SMA Taruna Sumbar"
+            className="absolute inset-0 w-full h-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/70 to-navy/40" />
+        </>
+      ) : (
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 30%, oklch(0.78 0.14 85 / 0.6), transparent 40%), radial-gradient(circle at 80% 70%, oklch(0.78 0.14 85 / 0.4), transparent 40%)",
+          }}
+        />
+      )}
       <div className="container mx-auto px-4 pt-24 pb-16 relative z-10">
         <div className="max-w-3xl animate-fade-up">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-gold/30 backdrop-blur-sm mb-6">

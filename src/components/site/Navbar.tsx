@@ -12,15 +12,19 @@ const links = [
   { label: "Kontak", href: "#contact" },
 ];
 
-export function Navbar() {
+export function Navbar({ logo }: { logo?: string }) {
   const [open, setOpen] = useState(false);
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-navy/95 backdrop-blur-md border-b border-white/10">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 text-white">
-          <div className="w-9 h-9 rounded-md bg-gold-gradient flex items-center justify-center shadow-gold">
-            <Shield className="w-5 h-5 text-navy" />
-          </div>
+          {logo ? (
+            <img src={logo} alt="Logo SMA Taruna Sumbar" className="w-10 h-10 object-contain rounded-md" />
+          ) : (
+            <div className="w-9 h-9 rounded-md bg-gold-gradient flex items-center justify-center shadow-gold">
+              <Shield className="w-5 h-5 text-navy" />
+            </div>
+          )}
           <div className="leading-tight">
             <div className="font-display text-lg font-bold">SMA Taruna</div>
             <div className="text-[10px] tracking-widest text-gold uppercase">Sumbar</div>
