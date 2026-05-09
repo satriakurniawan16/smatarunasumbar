@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, Upload, Image as ImageIcon, Plus, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/content")({
   component: ContentAdmin,
@@ -36,7 +36,7 @@ function ContentAdmin() {
     const { error } = await supabase.from("site_content").upsert({ key, value: c[key] });
     setSavingKey(null);
     if (error) toast.error(error.message);
-    else toast.success("Tersimpan");
+    else toast.success("Tersimpan — landing page diperbarui");
   };
 
   if (loading) {
@@ -44,19 +44,39 @@ function ContentAdmin() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="font-display text-3xl font-bold text-navy">Konten Website</h1>
-        <p className="text-muted-foreground">Kelola informasi yang tampil di setiap bagian beranda.</p>
+        <p className="text-muted-foreground">Semua perubahan langsung tersimpan ke database dan tampil real-time di landing page.</p>
       </div>
-      <Tabs defaultValue="hero">
+      <Tabs defaultValue="branding">
         <TabsList className="flex flex-wrap h-auto">
+          <TabsTrigger value="branding">Logo & Hero Image</TabsTrigger>
           <TabsTrigger value="hero">Hero</TabsTrigger>
           <TabsTrigger value="about">Tentang</TabsTrigger>
           <TabsTrigger value="vision">Visi & Misi</TabsTrigger>
           <TabsTrigger value="stats">Statistik</TabsTrigger>
+          <TabsTrigger value="register">Pendaftaran</TabsTrigger>
           <TabsTrigger value="contact">Kontak</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="branding">
+          <Section title="Logo & Hero Image">
+            <ImageUploadField
+              label="Logo Sekolah"
+              path="logo"
+              value={c.branding?.logo_url}
+              onChange={(url) => update("branding", { ...c.branding, logo_url: url })}
+            />
+            <ImageUploadField
+              label="Hero Background Image"
+              path="hero"
+              value={c.branding?.hero_image_url}
+              onChange={(url) => update("branding", { ...c.branding, hero_image_url: url })}
+            />
+            <SaveBtn onClick={() => save("branding")} loading={savingKey === "branding"} />
+          </Section>
+        </TabsContent>
 
         <TabsContent value="hero">
           <Section title="Hero Section">
@@ -101,6 +121,61 @@ function ContentAdmin() {
               />
             ))}
             <SaveBtn onClick={() => save("stats")} loading={savingKey === "stats"} />
+          </Section>
+        </TabsContent>
+
+        <TabsContent value="register">
+          <Section title="Bagian Pendaftaran">
+            <Field label="Judul" value={c.register?.title} onChange={(v) => update("register", { ...c.register, title: v })} />
+            <Field label="Subjudul" textarea value={c.register?.subtitle} onChange={(v) => update("register", { ...c.register, subtitle: v })} />
+            <div>
+              <Label>Langkah Pendaftaran</Label>
+              <div className="space-y-3 mt-2">
+                {(c.register?.steps ?? []).map((s: any, i: number) => (
+                  <div key={i} className="flex gap-2 items-start p-3 border rounded-lg">
+                    <div className="flex-1 space-y-2">
+                      <Input
+                        placeholder="Judul langkah"
+                        value={s.title}
+                        onChange={(e) => {
+                          const steps = [...c.register.steps];
+                          steps[i] = { ...steps[i], title: e.target.value };
+                          update("register", { ...c.register, steps });
+                        }}
+                      />
+                      <Textarea
+                        placeholder="Deskripsi"
+                        value={s.desc}
+                        rows={2}
+                        onChange={(e) => {
+                          const steps = [...c.register.steps];
+                          steps[i] = { ...steps[i], desc: e.target.value };
+                          update("register", { ...c.register, steps });
+                        }}
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const steps = c.register.steps.filter((_: any, j: number) => j !== i);
+                        update("register", { ...c.register, steps });
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => update("register", { ...c.register, steps: [...(c.register?.steps ?? []), { title: "", desc: "" }] })}
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Tambah Langkah
+                </Button>
+              </div>
+            </div>
+            <SaveBtn onClick={() => save("register")} loading={savingKey === "register"} />
           </Section>
         </TabsContent>
 
@@ -153,5 +228,64 @@ function SaveBtn({ onClick, loading }: { onClick: () => void; loading: boolean }
       {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
       Simpan
     </Button>
+  );
+}
+
+function ImageUploadField({
+  label, path, value, onChange,
+}: {
+  label: string; path: string; value?: string; onChange: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const filename = `${path}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("site-assets").upload(filename, file, { upsert: true });
+    if (error) {
+      toast.error(error.message);
+      setUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(filename);
+    onChange(data.publicUrl);
+    setUploading(false);
+    toast.success("Gambar berhasil diunggah — jangan lupa klik Simpan");
+  };
+
+  return (
+    <div>
+      <Label>{label}</Label>
+      <div className="mt-2 flex items-center gap-4">
+        <div className="w-32 h-32 rounded-lg bg-muted border border-border flex items-center justify-center overflow-hidden">
+          {value ? (
+            <img src={value} alt={label} className="w-full h-full object-cover" />
+          ) : (
+            <ImageIcon className="w-8 h-8 text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex-1 space-y-2">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && handleUpload(e.target.files[0])}
+          />
+          <Button type="button" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}>
+            {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+            {uploading ? "Mengunggah…" : "Unggah Gambar"}
+          </Button>
+          {value && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")} className="ml-2 text-destructive">
+              Hapus
+            </Button>
+          )}
+          <p className="text-xs text-muted-foreground">Format: JPG / PNG / SVG. Maks 5 MB.</p>
+        </div>
+      </div>
+    </div>
   );
 }
