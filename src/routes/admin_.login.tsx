@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Shield, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin/login")({
+export const Route = createFileRoute("/admin_/login")({
   head: () => ({ meta: [{ title: "Admin Login — SMA Taruna Sumbar" }] }),
   component: LoginPage,
 });
