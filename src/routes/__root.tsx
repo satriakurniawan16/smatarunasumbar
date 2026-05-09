@@ -46,8 +46,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SMA Taruna Sumbar" },
-      { name: "description", content: "Sekolah unggulan berbasis semi-militer di Sumatera Barat." },
+      { title: "SMAS Taruna Sumatera Barat" },
+      { name: "description", content: "\"Menggali potensi, melampaui batas\"" },
+      { property: "og:title", content: "SMAS Taruna Sumatera Barat" },
+      { name: "twitter:title", content: "SMAS Taruna Sumatera Barat" },
+      { property: "og:description", content: "\"Menggali potensi, melampaui batas\"" },
+      { name: "twitter:description", content: "\"Menggali potensi, melampaui batas\"" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/1yql7usMhxcWsAl44Lkc2a39g9r2/social-images/social-1778348295871-ChatGPT_Image_Feb_26,_2026,_04_19_55_PM.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/1yql7usMhxcWsAl44Lkc2a39g9r2/social-images/social-1778348295871-ChatGPT_Image_Feb_26,_2026,_04_19_55_PM.webp" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
